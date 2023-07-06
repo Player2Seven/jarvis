@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jarvis Voice Assistant</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Jarvis Voice Assistant</h1>
+    <p id="response"></p>
+
+    <script>
+        $(document).ready(function() {
+            var recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onresult = function(event) {
+                var input = event.results[event.results.length - 1][0].transcript;
+                console.log("User: " + input);
+
+                if (input.toLowerCase().includes("open")) {
+                    var app = input.split("open")[1].trim();
+                    console.log("Opening: " + app);
+                    // Execute code to open the desktop app here
+                } else {
+                    // Send user's query to the server for ChatGPT processing
+                    $.ajax({
+                        type: "POST",
+                        url: "/ask",
+                        data: JSON.stringify({ query: input }),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function(response) {
+                            console.log("Jarvis: " + response.reply);
+                            speak(response.reply);
+                        },
+                        error: function(xhr, textStatus, errorThrown) {
+                            console.log("Error: " + errorThrown);
+                        }
+                    });
+                }
+            };
+
+            recognition.start();
+
+            function speak(text) {
+                var msg = new SpeechSynthesisUtterance();
+                msg.text = text;
+                window.speechSynthesis.speak(msg);
+                $("#response").text(text);
+            }
+        });
+    </script>
+</body>
+</html>
